@@ -446,9 +446,16 @@ export function IssuesTab({ onNavigate, selectedProjects, onRefresh }: IssuesTab
                       ? 'bg-[#c9983a]/20 border-[#c9983a]/30' 
                       : 'bg-[#8b6f3a]/15 border-[#8b6f3a]/30'
                   }`}>
-                    <Star className={`w-4 h-4 transition-colors ${
-                      isDark ? 'text-[#c9983a]' : 'text-[#8b6f3a]'
-                    }`} />
+                    {failedAvatars.has(getGitHubAvatar(selectedIssue.user, 16)) ? (
+                      <div className="w-4 h-4 rounded-full bg-gradient-to-br from-[#c9983a]/30 to-[#d4af37]/20 border border-[#c9983a]/40" />
+                    ) : (
+                      <img
+                        src={getGitHubAvatar(selectedIssue.user, 16)}
+                        alt={selectedIssue.user}
+                        className="w-4 h-4 rounded-full border border-[#c9983a]/40"
+                        onError={() => setFailedAvatars(prev => new Set(prev).add(getGitHubAvatar(selectedIssue.user, 16)))}
+                      />
+                    )}
                     <span className={`text-[12px] font-bold transition-colors ${
                       isDark ? 'text-[#c9983a]' : 'text-[#8b6f3a]'
                     }`}>{selectedIssue.user}</span>
