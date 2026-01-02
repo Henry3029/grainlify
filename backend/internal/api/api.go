@@ -154,12 +154,32 @@ func New(cfg config.Config, deps Deps) *fiber.App {
 	app.Options("/webhooks/github", func(c *fiber.Ctx) error {
 		return c.SendStatus(fiber.StatusOK)
 	})
+	// Also handle trailing slash
+	app.Options("/webhooks/github/", func(c *fiber.Ctx) error {
+		return c.SendStatus(fiber.StatusOK)
+	})
 	app.Post("/webhooks/github", webhooks.Receive())
+	app.Post("/webhooks/github/", webhooks.Receive())
 
 	// Didit webhook handler (supports both GET callback redirects and POST webhook events)
 	diditWebhook := handlers.NewDiditWebhookHandler(cfg, deps.DB)
 	app.Get("/webhooks/didit", diditWebhook.Receive())
 	app.Post("/webhooks/didit", diditWebhook.Receive())
+
+	// Add catch-all 404 handler to log unmatched routes (helps debug routing issues)
+	app.Use(func(c *fiber.Ctx) error {
+		slog.Warn("unmatched route",
+			"method", c.Method(),
+			"path", c.Path(),
+			"original_url", c.OriginalURL(),
+			"remote_ip", c.IP(),
+			"user_agent", c.Get("User-Agent"),
+		)
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "not_found",
+			"path":  c.Path(),
+		})
+	})
 
 	slog.Info("all routes registered",
 		"total_routes", "~30",
