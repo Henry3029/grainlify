@@ -1,5 +1,5 @@
 import { useTheme } from '../../../shared/contexts/ThemeContext';
-import { Heart, Star, GitFork, ArrowUpRight, Target, Zap, AlertCircle } from 'lucide-react';
+import { Heart, Star, GitFork, ArrowUpRight, Target, Zap } from 'lucide-react';
 import { LanguageIcon } from '../../../shared/components/LanguageIcon';
 import { IssueCard } from '../../../shared/components/ui/IssueCard';
 import { useState, useEffect } from 'react';
@@ -7,7 +7,6 @@ import { IssueDetailPage } from './IssueDetailPage';
 import { ProjectDetailPage } from './ProjectDetailPage';
 import { getRecommendedProjects, getPublicProjectIssues } from '../../../shared/api/client';
 import { SkeletonLoader } from '../../../shared/components/SkeletonLoader';
-import { getUserFriendlyError } from '../../../shared/utils/errorHandler';
 
 // Helper function to format numbers (e.g., 1234 -> "1.2K", 1234567 -> "1.2M")
 const formatNumber = (num: number): string => {
@@ -149,13 +148,11 @@ export function DiscoverPage() {
   }>>([]);
   const [isLoadingProjects, setIsLoadingProjects] = useState(true);
   const [isLoadingIssues, setIsLoadingIssues] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   // Fetch recommended projects
   useEffect(() => {
     const loadRecommendedProjects = async () => {
       setIsLoadingProjects(true);
-      setError(null);
       try {
         const response = await getRecommendedProjects(8);
         if (!response || !response.projects || !Array.isArray(response.projects)) {
@@ -178,12 +175,12 @@ export function DiscoverPage() {
         });
         
         setProjects(mappedProjects);
-      } catch (err) {
-        const userFriendlyError = getUserFriendlyError(err);
-        setError(userFriendlyError);
-        setProjects([]);
-      } finally {
         setIsLoadingProjects(false);
+      } catch (err) {
+        console.error('Failed to fetch recommended projects:', err);
+        // Keep loading state true to show skeleton forever when backend is down
+        setProjects([]);
+        // Don't set isLoadingProjects to false - keep showing skeleton
       }
     };
 
@@ -343,30 +340,6 @@ export function DiscoverPage() {
         }`}>
           Finding best suited your interests and expertise
         </p>
-
-        {error && (
-          <div className={`flex items-start gap-3 p-4 rounded-[16px] border mb-6 ${
-            theme === 'dark'
-              ? 'bg-red-500/10 border-red-500/30'
-              : 'bg-red-50/80 border-red-200/50'
-          }`}>
-            <AlertCircle className={`w-5 h-5 flex-shrink-0 mt-0.5 ${
-              theme === 'dark' ? 'text-red-400' : 'text-red-600'
-            }`} />
-            <div className="flex-1">
-              <p className={`text-[14px] font-semibold mb-1 ${
-                theme === 'dark' ? 'text-red-400' : 'text-red-700'
-              }`}>
-                Unable to load recommended projects
-              </p>
-              <p className={`text-[13px] ${
-                theme === 'dark' ? 'text-red-300/80' : 'text-red-600/80'
-              }`}>
-                {error}
-              </p>
-            </div>
-          </div>
-        )}
 
         {isLoadingProjects ? (
           <div className="flex gap-6 overflow-x-auto pb-2">

@@ -21,7 +21,6 @@ export function ProjectDetailPage({ onBack, onIssueClick, projectId: propProject
   const [activeIssueTab, setActiveIssueTab] = useState('all');
   const [copiedLink, setCopiedLink] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [project, setProject] = useState<null | Awaited<ReturnType<typeof getPublicProject>>>(null);
   const [issues, setIssues] = useState<Array<{
     github_issue_id: number;
@@ -60,7 +59,6 @@ export function ProjectDetailPage({ onBack, onIssueClick, projectId: propProject
         return;
       }
       setIsLoading(true);
-      setError(null);
       try {
         console.log('ProjectDetailPage: Fetching project data for ID:', projectId);
         const [p, i, pr] = await Promise.all([
@@ -77,13 +75,12 @@ export function ProjectDetailPage({ onBack, onIssueClick, projectId: propProject
         setProject(p);
         setIssues(i?.issues || []);
         setPRs(pr?.prs || []);
+        setIsLoading(false);
       } catch (e) {
         if (cancelled) return;
         console.error('ProjectDetailPage: Error loading project data', e);
-        setError(e instanceof Error ? e.message : 'Failed to load project');
-      } finally {
-        if (cancelled) return;
-        setIsLoading(false);
+        // Keep loading state true to show skeleton forever when backend is down
+        // Don't set isLoading to false - keep showing skeleton
       }
     };
 
@@ -536,13 +533,6 @@ export function ProjectDetailPage({ onBack, onIssueClick, projectId: propProject
               </button>
             </div>
           </div>
-          {error && (
-            <div className={`mt-4 p-4 rounded-[16px] border ${
-              theme === 'dark' ? 'bg-red-500/10 border-red-500/30 text-red-400' : 'bg-red-500/10 border-red-500/30 text-red-600'
-            }`}>
-              <p className="text-[14px] font-semibold">{error}</p>
-            </div>
-          )}
         </div>
 
         {/* Overview */}

@@ -50,14 +50,15 @@ export function ProfilePage() {
   // Fetch profile data
   useEffect(() => {
     const fetchProfile = async () => {
+      setIsLoadingProfile(true);
       try {
-        setIsLoadingProfile(true);
         const data = await getUserProfile();
         setProfileData(data);
+        setIsLoadingProfile(false);
       } catch (error) {
         console.error('Failed to fetch profile:', error);
-      } finally {
-        setIsLoadingProfile(false);
+        // Keep loading state true to show skeleton forever when backend is down
+        // Don't set isLoadingProfile to false - keep showing skeleton
       }
     };
     fetchProfile();

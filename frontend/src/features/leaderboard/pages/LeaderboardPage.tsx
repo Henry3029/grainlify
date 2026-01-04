@@ -11,6 +11,8 @@ import { FiltersSection } from '../components/FiltersSection';
 import { ContributorsTable } from '../components/ContributorsTable';
 import { ProjectsTable } from '../components/ProjectsTable';
 import { LeaderboardStyles } from '../components/LeaderboardStyles';
+import { ContributorsPodiumSkeleton } from '../components/ContributorsPodiumSkeleton';
+import { ContributorsTableSkeleton } from '../components/ContributorsTableSkeleton';
 
 export function LeaderboardPage() {
   const [activeFilter, setActiveFilter] = useState<FilterType>('overall');
@@ -21,14 +23,12 @@ export function LeaderboardPage() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [leaderboardData, setLeaderboardData] = useState<LeaderData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   // Fetch leaderboard data
   useEffect(() => {
     const fetchLeaderboard = async () => {
       if (leaderboardType === 'contributors') {
         setIsLoading(true);
-        setError(null);
         try {
           const data = await getLeaderboard(10);
           // Transform API data to match LeaderData type
@@ -45,14 +45,17 @@ export function LeaderboardPage() {
             ecosystems: item.ecosystems || [],
           }));
           setLeaderboardData(transformedData);
+          setIsLoading(false);
         } catch (err) {
           console.error('Failed to fetch leaderboard:', err);
-          setError(err instanceof Error ? err.message : 'Failed to load leaderboard');
-          // Fallback to empty array
+          // Don't set error - keep loading state to show skeleton forever
+          // Don't set isLoading to false - keep showing skeleton when backend is down
           setLeaderboardData([]);
-        } finally {
-          setIsLoading(false);
+          // Keep isLoading as true to show skeleton forever
         }
+      } else {
+        // For projects, we don't fetch from API, so set loading to false
+        setIsLoading(false);
       }
     };
 
@@ -116,10 +119,13 @@ export function LeaderboardPage() {
       {/* Hero Header Section */}
       <LeaderboardHero leaderboardType={leaderboardType} isLoaded={isLoaded}>
         {/* Top 3 Podium - Contributors */}
-        {leaderboardType === 'contributors' && leaderboardData.length > 0 && (
+        {leaderboardType === 'contributors' && isLoading && (
+          <ContributorsPodiumSkeleton />
+        )}
+        {leaderboardType === 'contributors' && !isLoading && leaderboardData.length > 0 && (
           <ContributorsPodium topThree={contributorTopThree} isLoaded={isLoaded} />
         )}
-        {leaderboardType === 'contributors' && leaderboardData.length === 0 && !isLoading && (
+        {leaderboardType === 'contributors' && !isLoading && leaderboardData.length === 0 && (
           <div className="text-center py-8 text-gray-500">
             No contributors yet. Be the first to contribute!
           </div>
@@ -145,17 +151,9 @@ export function LeaderboardPage() {
       {/* Leaderboard Table - Contributors */}
       {leaderboardType === 'contributors' && (
         <>
-          {isLoading && (
-            <div className="text-center py-12 text-gray-500">
-              Loading leaderboard...
-            </div>
-          )}
-          {error && (
-            <div className="text-center py-12 text-red-500">
-              {error}
-            </div>
-          )}
-          {!isLoading && !error && (
+          {isLoading ? (
+            <ContributorsTableSkeleton />
+          ) : (
             <ContributorsTable
               data={leaderboardData}
               activeFilter={activeFilter}

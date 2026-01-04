@@ -254,7 +254,7 @@ export function Dashboard() {
       <main className={`mr-2 my-2 relative z-10 transition-all duration-300 ${isSidebarCollapsed ? 'ml-[81px]' : 'ml-[240px]'}`}>
         <div className="max-w-[1400px] mx-auto">
           {/* Premium Pill-Style Header - Greatest of All Time */}
-          <div className={`fixed top-2 right-2 left-auto z-[60] flex items-center gap-3 h-[52px] py-3 rounded-[26px] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] backdrop-blur-[90px] border transition-all duration-300 ${
+          <div className={`fixed top-2 right-2 left-auto z-[9999] flex items-center gap-3 h-[52px] py-3 rounded-[26px] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] backdrop-blur-[90px] border transition-all duration-300 ${
             isSidebarCollapsed ? 'ml-[81px]' : 'ml-[240px]'
           } ${
             darkTheme

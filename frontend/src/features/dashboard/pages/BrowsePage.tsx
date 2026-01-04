@@ -1,11 +1,10 @@
-import { X, AlertCircle } from 'lucide-react';
+import { X } from 'lucide-react';
 import { useTheme } from '../../../shared/contexts/ThemeContext';
 import { useState, useEffect } from 'react';
 import { Dropdown } from '../../../shared/components/ui/Dropdown';
 import { ProjectCard, Project } from '../components/ProjectCard';
 import { ProjectCardSkeleton } from '../components/ProjectCardSkeleton';
 import { getPublicProjects } from '../../../shared/api/client';
-import { getUserFriendlyError } from '../../../shared/utils/errorHandler';
 
 interface BrowsePageProps {
   onProjectClick?: (id: string) => void;
@@ -78,7 +77,6 @@ export function BrowsePage({ onProjectClick }: BrowsePageProps) {
   });
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   // Filter options data
   const filterOptions = {
@@ -192,12 +190,12 @@ export function BrowsePage({ onProjectClick }: BrowsePageProps) {
           });
 
         setProjects(mappedProjects);
-      } catch (err) {
-        const userFriendlyError = getUserFriendlyError(err);
-        setError(userFriendlyError);
-        setProjects([]);
-      } finally {
         setIsLoading(false);
+      } catch (err) {
+        console.error('Failed to fetch projects:', err);
+        // Keep loading state true to show skeleton forever when backend is down
+        setProjects([]);
+        // Don't set isLoading to false - keep showing skeleton
       }
     };
 
@@ -249,31 +247,6 @@ export function BrowsePage({ onProjectClick }: BrowsePageProps) {
           />
         ))}
       </div>
-
-      {/* Error State */}
-      {error && (
-        <div className={`flex items-start gap-3 p-4 rounded-[16px] border ${
-          theme === 'dark'
-            ? 'bg-red-500/10 border-red-500/30'
-            : 'bg-red-50/80 border-red-200/50'
-        }`}>
-          <AlertCircle className={`w-5 h-5 flex-shrink-0 mt-0.5 ${
-            theme === 'dark' ? 'text-red-400' : 'text-red-600'
-          }`} />
-          <div className="flex-1">
-            <p className={`text-[14px] font-semibold mb-1 ${
-              theme === 'dark' ? 'text-red-400' : 'text-red-700'
-            }`}>
-              Unable to load projects
-            </p>
-            <p className={`text-[13px] ${
-              theme === 'dark' ? 'text-red-300/80' : 'text-red-600/80'
-            }`}>
-              {error}
-            </p>
-          </div>
-        </div>
-      )}
 
       {/* Projects Grid */}
       {isLoading ? (

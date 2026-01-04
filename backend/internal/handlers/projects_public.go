@@ -365,7 +365,7 @@ func (h *ProjectsPublicHandler) List() fiber.Handler {
 		language := strings.TrimSpace(c.Query("language"))
 		category := strings.TrimSpace(c.Query("category"))
 		tagsParam := strings.TrimSpace(c.Query("tags"))
-		
+
 		limit := 50
 		if l := c.QueryInt("limit", 50); l > 0 && l <= 200 {
 			limit = l
@@ -550,21 +550,21 @@ WHERE id=$1
 			}
 
 			out = append(out, fiber.Map{
-				"id":              id.String(),
-				"github_full_name": fullName,
-				"language":        language,
-				"tags":            tags,
-				"category":        category,
-				"stars_count":     stars,
-				"forks_count":     forks,
+				"id":                 id.String(),
+				"github_full_name":   fullName,
+				"language":           language,
+				"tags":               tags,
+				"category":           category,
+				"stars_count":        stars,
+				"forks_count":        forks,
 				"contributors_count": contributorsCount,
 				"open_issues_count":  openIssuesCount,
 				"open_prs_count":     openPRsCount,
-				"ecosystem_name":  ecosystemName,
-				"ecosystem_slug":  ecosystemSlug,
-				"description":     description,
-				"created_at":      createdAt,
-				"updated_at":      updatedAt,
+				"ecosystem_name":     ecosystemName,
+				"ecosystem_slug":     ecosystemSlug,
+				"description":        description,
+				"created_at":         createdAt,
+				"updated_at":         updatedAt,
 			})
 		}
 
@@ -719,7 +719,7 @@ WHERE id=$1
 				"open_prs_count":     openPRsCount,
 				"ecosystem_name":     ecosystemName,
 				"ecosystem_slug":     ecosystemSlug,
-				"description":       description,
+				"description":        description,
 				"created_at":         createdAt,
 				"updated_at":         updatedAt,
 			})
@@ -811,10 +811,9 @@ ORDER BY tag
 		}
 
 		return c.Status(fiber.StatusOK).JSON(fiber.Map{
-			"languages": languages,
+			"languages":  languages,
 			"categories": categories,
-			"tags":      tags,
+			"tags":       tags,
 		})
 	}
 }
-
