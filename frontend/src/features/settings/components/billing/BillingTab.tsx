@@ -705,7 +705,7 @@ export function BillingTab() {
                         <select
                           value={profileType}
                           onChange={(e) => setProfileType(e.target.value as BillingProfileType)}
-                          className={`w-full px-4 py-3 pr-10 rounded-[14px] backdrop-blur-[30px] border focus:outline-none focus:border-[#c9983a]/30 transition-all text-[14px] appearance-none cursor-pointer ${
+                          className={`w-full px-4 py-3 pr-12 rounded-[14px] backdrop-blur-[30px] border focus:outline-none focus:border-[#c9983a]/30 transition-all text-[14px] appearance-none cursor-pointer ${
                             theme === 'dark'
                               ? 'bg-white/[0.08] border-white/15 text-[#f5efe5] focus:bg-white/[0.12]'
                               : 'bg-white/[0.15] border-white/25 text-[#2d2820] focus:bg-white/[0.2]'
@@ -747,7 +747,7 @@ export function BillingTab() {
                         </select>
                       );
                     })()}
-                    <ChevronDown className={`absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 pointer-events-none transition-colors ${
+                    <ChevronDown className={`absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 pointer-events-none transition-colors ${
                       theme === 'dark' ? 'text-[#b8a898]' : 'text-[#7a6b5a]'
                     }`} />
                   </div>

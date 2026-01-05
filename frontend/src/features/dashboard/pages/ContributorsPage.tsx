@@ -2,8 +2,10 @@ import { useState } from 'react';
 import { ContributionsTab } from '../components/ContributionsTab';
 import { ProjectsTab } from '../components/ProjectsTab';
 import { RewardsTab } from '../components/RewardsTab';
+import { useTheme } from '../../../shared/contexts/ThemeContext';
 
 export function ContributorsPage() {
+  const { theme } = useTheme();
   const [activeTab, setActiveTab] = useState<'contributions' | 'projects' | 'rewards'>('contributions');
 
   return (
@@ -16,7 +18,9 @@ export function ContributorsPage() {
             className={`px-6 py-2.5 rounded-[12px] font-semibold text-[14px] transition-all ${
               activeTab === 'contributions'
                 ? 'bg-[#c9983a] text-white shadow-[0_4px_12px_rgba(201,152,58,0.4)]'
-                : 'bg-transparent text-[#7a6b5a] hover:text-[#2d2820]'
+                : theme === 'dark'
+                  ? 'bg-transparent text-[#b8a898] hover:text-[#d4c5b0]'
+                  : 'bg-transparent text-[#7a6b5a] hover:text-[#2d2820]'
             }`}
           >
             Contributions
@@ -26,7 +30,9 @@ export function ContributorsPage() {
             className={`px-6 py-2.5 rounded-[12px] font-semibold text-[14px] transition-all ${
               activeTab === 'projects'
                 ? 'bg-[#c9983a] text-white shadow-[0_4px_12px_rgba(201,152,58,0.4)]'
-                : 'bg-transparent text-[#7a6b5a] hover:text-[#2d2820]'
+                : theme === 'dark'
+                  ? 'bg-transparent text-[#b8a898] hover:text-[#d4c5b0]'
+                  : 'bg-transparent text-[#7a6b5a] hover:text-[#2d2820]'
             }`}
           >
             Projects
@@ -36,7 +42,9 @@ export function ContributorsPage() {
             className={`px-6 py-2.5 rounded-[12px] font-semibold text-[14px] transition-all ${
               activeTab === 'rewards'
                 ? 'bg-[#c9983a] text-white shadow-[0_4px_12px_rgba(201,152,58,0.4)]'
-                : 'bg-transparent text-[#7a6b5a] hover:text-[#2d2820]'
+                : theme === 'dark'
+                  ? 'bg-transparent text-[#b8a898] hover:text-[#d4c5b0]'
+                  : 'bg-transparent text-[#7a6b5a] hover:text-[#2d2820]'
             }`}
           >
             Rewards

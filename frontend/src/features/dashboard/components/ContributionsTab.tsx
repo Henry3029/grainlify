@@ -125,18 +125,26 @@ export function ContributionsTab() {
           {/* Filter Button */}
           <button
             onClick={() => setIsFilterOpen(true)}
-            className="w-12 h-12 flex items-center justify-center rounded-[12px] backdrop-blur-[30px] bg-white/[0.15] border border-white/25 text-[#7a6b5a] hover:bg-white/[0.2] hover:border-[#c9983a]/40 transition-all"
+            className={`w-12 h-12 flex items-center justify-center rounded-[12px] backdrop-blur-[30px] bg-white/[0.15] border border-white/25 hover:bg-white/[0.2] hover:border-[#c9983a]/40 transition-all ${
+              theme === 'dark' ? 'text-[#b8a898]' : 'text-[#7a6b5a]'
+            }`}
           >
             <Filter className="w-5 h-5" />
           </button>
 
           {/* Search Bar */}
           <div className="relative flex-1">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#7a6b5a] z-10" />
+            <Search className={`absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 z-10 transition-colors ${
+              theme === 'dark' ? 'text-[#b8a898]' : 'text-[#7a6b5a]'
+            }`} />
             <input
               type="text"
               placeholder="Search"
-              className="w-full pl-12 pr-4 py-3 rounded-[12px] backdrop-blur-[30px] bg-white/[0.15] border border-white/25 text-[#2d2820] placeholder-[#7a6b5a] focus:outline-none focus:bg-white/[0.2] focus:border-[#c9983a]/40 transition-all text-[13px]"
+              className={`w-full pl-12 pr-4 py-3 rounded-[12px] backdrop-blur-[30px] bg-white/[0.15] border border-white/25 focus:outline-none focus:bg-white/[0.2] focus:border-[#c9983a]/40 transition-all text-[13px] ${
+                theme === 'dark'
+                  ? 'text-[#f5efe5] placeholder-[#b8a898]'
+                  : 'text-[#2d2820] placeholder-[#7a6b5a]'
+              }`}
             />
           </div>
         </div>

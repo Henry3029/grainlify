@@ -71,8 +71,9 @@ export function PayoutTab() {
       }`}>
         {isLoading ? (
           <>
-            <SkeletonLoader variant="text" width="200px" height="34px" className="mb-2" />
-            <SkeletonLoader variant="text" width="500px" height="20px" className="mb-8" />
+            <SkeletonLoader className="h-7 w-48 mb-2" />
+            <SkeletonLoader className="h-4 w-full mb-1" />
+            <SkeletonLoader className="h-4 w-3/4 mb-8" />
           </>
         ) : (
           <>
@@ -88,25 +89,28 @@ export function PayoutTab() {
         )}
 
         {isLoading ? (
-          // Loading State with granular skeletons
+          // Loading State with granular skeletons matching discover/explore style
           <div className="space-y-4 mb-6">
             {/* Header Row Skeleton */}
             <div className="grid grid-cols-2 gap-4 pb-3 border-b border-white/10">
-              <SkeletonLoader variant="text" width="80px" height="16px" />
-              <SkeletonLoader variant="text" width="120px" height="16px" />
+              <SkeletonLoader className="h-4 w-20" />
+              <SkeletonLoader className="h-4 w-32" />
             </div>
 
-            {/* Project Rows Skeleton */}
+            {/* Project Rows Skeleton - Granular like discover/explore */}
             {Array.from({ length: 4 }).map((_, idx) => (
               <div key={idx} className="grid grid-cols-2 gap-4 items-center py-4 border-b border-white/5">
                 {/* Project Column Skeleton */}
                 <div className="flex items-center gap-3">
-                  <SkeletonLoader variant="circle" width="40px" height="40px" />
-                  <SkeletonLoader variant="text" width="150px" height="16px" />
+                  <SkeletonLoader variant="circle" className="w-10 h-10 flex-shrink-0" />
+                  <div className="flex flex-col gap-2">
+                    <SkeletonLoader className="h-4 w-32" />
+                    <SkeletonLoader className="h-3 w-24" />
+                  </div>
                 </div>
                 {/* Billing Profile Column Skeleton */}
                 <div className="flex items-center">
-                  <SkeletonLoader variant="default" width="300px" height="40px" />
+                  <SkeletonLoader className="h-10 w-[300px] rounded-[12px]" />
                 </div>
               </div>
             ))}
