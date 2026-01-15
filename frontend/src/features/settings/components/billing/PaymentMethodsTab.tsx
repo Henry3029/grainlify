@@ -3,7 +3,6 @@ import { createPortal } from 'react-dom';
 import { Plus, Trash2, Wallet, Copy, CheckCircle2, Star, X } from 'lucide-react';
 import { useTheme } from '../../../../shared/contexts/ThemeContext';
 import { PaymentMethod, EcosystemType, CryptoType } from '../../types';
-import casperIcon from '../../../../assets/casper.png';
 
 interface PaymentMethodsTabProps {
   paymentMethods: PaymentMethod[];
@@ -20,33 +19,12 @@ export function PaymentMethodsTab({
 }: PaymentMethodsTabProps) {
   const { theme } = useTheme();
   const [showAddModal, setShowAddModal] = useState(false);
-  const [selectedEcosystem, setSelectedEcosystem] = useState<EcosystemType>('ethereum');
+  const selectedEcosystem: EcosystemType = 'stellar';
   const [selectedCrypto, setSelectedCrypto] = useState<CryptoType>('usdc');
   const [walletAddress, setWalletAddress] = useState('');
   const [copiedId, setCopiedId] = useState<number | null>(null);
 
-  // Get available crypto types based on selected ecosystem
-  const getAvailableCryptos = (ecosystem: EcosystemType): CryptoType[] => {
-    switch (ecosystem) {
-      case 'ethereum':
-        return ['usdc', 'usdt', 'eth'];
-      case 'starknet':
-        return ['usdc', 'usdt', 'strk'];
-      case 'stellar':
-        return ['usdc', 'usdt', 'xlm'];
-      case 'casper':
-        return ['usdc', 'usdt', 'cspr'];
-      default:
-        return ['usdc', 'usdt'];
-    }
-  };
-
-  const handleEcosystemChange = (ecosystem: EcosystemType) => {
-    setSelectedEcosystem(ecosystem);
-    // Reset crypto to first available option
-    const availableCryptos = getAvailableCryptos(ecosystem);
-    setSelectedCrypto(availableCryptos[0]);
-  };
+  const getAvailableCryptos = (): CryptoType[] => ['usdc', 'usdt', 'xlm'];
 
   const handleAddPaymentMethod = () => {
     if (!walletAddress.trim()) return;
@@ -63,7 +41,6 @@ export function PaymentMethodsTab({
     onAddPaymentMethod(newMethod);
     setShowAddModal(false);
     setWalletAddress('');
-    setSelectedEcosystem('ethereum');
     setSelectedCrypto('usdc');
   };
 
@@ -73,15 +50,7 @@ export function PaymentMethodsTab({
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const getEcosystemColor = (ecosystem: EcosystemType) => {
-    const colors = {
-      ethereum: '#627EEA', // Ethereum brand color
-      starknet: '#EC796B', // Starknet brand color
-      stellar: '#14B6E7', // Stellar brand color
-      casper: '#1A1A1A', // Casper brand color (dark)
-    };
-    return colors[ecosystem];
-  };
+  const getEcosystemColor = (_ecosystem: EcosystemType) => '#14B6E7'; // Stellar brand color
 
   const getCryptoLabel = (crypto: CryptoType) => {
     return crypto.toUpperCase();
@@ -102,7 +71,7 @@ export function PaymentMethodsTab({
           <p className={`text-[14px] transition-colors ${
             theme === 'dark' ? 'text-[#b8a898]' : 'text-[#7a6b5a]'
           }`}>
-            We support crypto payments only. Add your wallet addresses for USDC, USDT, ETH, and other tokens.
+            We support crypto payments only. Add your wallet addresses for USDC, USDT, and XLM.
           </p>
         </div>
         <button
@@ -133,15 +102,7 @@ export function PaymentMethodsTab({
                     className="w-12 h-12 rounded-[14px] flex items-center justify-center flex-shrink-0"
                     style={{ backgroundColor: getEcosystemColor(method.ecosystem) }}
                   >
-                    {method.ecosystem === 'casper' ? (
-                      <img 
-                        src={casperIcon} 
-                        alt="Casper" 
-                        className="w-6 h-6 object-contain"
-                      />
-                    ) : (
-                      <Wallet className="w-6 h-6 text-white" />
-                    )}
+                    <Wallet className="w-6 h-6 text-white" />
                   </div>
 
                   {/* Details */}
@@ -271,53 +232,6 @@ export function PaymentMethodsTab({
             </div>
 
             <div className="space-y-5">
-              {/* Ecosystem Selection */}
-              <div>
-                <label className={`block text-[14px] font-semibold mb-3 transition-colors ${
-                  theme === 'dark' ? 'text-[#f5efe5]' : 'text-[#2d2820]'
-                }`}>
-                  Select Ecosystem
-                </label>
-                <div className="grid grid-cols-4 gap-3">
-                  {(['ethereum', 'starknet', 'stellar', 'casper'] as EcosystemType[]).map((ecosystem) => {
-                    const iconColor = getEcosystemColor(ecosystem);
-                    return (
-                      <button
-                        key={ecosystem}
-                        onClick={() => handleEcosystemChange(ecosystem)}
-                        className={`p-4 rounded-[14px] backdrop-blur-[25px] border-2 transition-all ${
-                          selectedEcosystem === ecosystem
-                            ? 'border-[#c9983a] bg-[#c9983a]/10'
-                            : theme === 'dark'
-                              ? 'border-white/15 bg-white/[0.08] hover:bg-white/[0.12]'
-                              : 'border-white/25 bg-white/[0.15] hover:bg-white/[0.2]'
-                        }`}
-                      >
-                        <div 
-                          className="w-10 h-10 rounded-[10px] mx-auto mb-2 flex items-center justify-center"
-                          style={{ backgroundColor: iconColor }}
-                        >
-                          {ecosystem === 'casper' ? (
-                            <img 
-                              src={casperIcon} 
-                              alt="Casper" 
-                              className="w-5 h-5 object-contain"
-                            />
-                          ) : (
-                            <Wallet className="w-5 h-5 text-white" />
-                          )}
-                        </div>
-                        <p className={`text-[13px] font-semibold capitalize transition-colors ${
-                          theme === 'dark' ? 'text-[#e8dfd0]' : 'text-[#2d2820]'
-                        }`}>
-                          {ecosystem}
-                        </p>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
               {/* Crypto Type Selection */}
               <div>
                 <label className={`block text-[14px] font-semibold mb-3 transition-colors ${
@@ -326,7 +240,7 @@ export function PaymentMethodsTab({
                   Select Token
                 </label>
                 <div className="grid grid-cols-3 gap-3">
-                  {getAvailableCryptos(selectedEcosystem).map((crypto) => (
+                  {getAvailableCryptos().map((crypto) => (
                     <button
                       key={crypto}
                       onClick={() => setSelectedCrypto(crypto)}
