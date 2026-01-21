@@ -209,8 +209,64 @@ export function EcosystemsPage({ onEcosystemClick }: EcosystemsPageProps) {
 
       {/* Ecosystems Grid */}
       {isLoading ? (
-        <div className={`text-center py-12 ${theme === 'dark' ? 'text-[#d4d4d4]' : 'text-[#7a6b5a]'}`}>
-          Loading ecosystems...
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 animate-pulse">
+          {Array.from({ length: 6 }).map((_, idx) => (
+            <div
+              key={idx}
+              className={`backdrop-blur-[30px] rounded-[20px] border p-6 ${
+                theme === 'dark'
+                  ? 'bg-white/[0.08] border-white/10'
+                  : 'bg-white/[0.15] border-white/25'
+              }`}
+            >
+              {/* Icon */}
+              <div className="flex items-start justify-between mb-5">
+                <div className={`w-14 h-14 rounded-[14px] ${
+                  theme === 'dark' ? 'bg-white/10' : 'bg-black/10'
+                }`} />
+              </div>
+
+              {/* Title */}
+              <div className={`h-5 w-2/3 rounded ${
+                theme === 'dark' ? 'bg-white/10' : 'bg-black/10'
+              }`} />
+
+              {/* Stats */}
+              <div className="flex items-center gap-6 mt-4 mb-4">
+                <div className="flex-1">
+                  <div className={`h-3 w-16 rounded ${
+                    theme === 'dark' ? 'bg-white/10' : 'bg-black/10'
+                  }`} />
+                  <div className={`h-6 w-10 rounded mt-2 ${
+                    theme === 'dark' ? 'bg-white/10' : 'bg-black/10'
+                  }`} />
+                </div>
+                <div className="flex-1">
+                  <div className={`h-3 w-24 rounded ${
+                    theme === 'dark' ? 'bg-white/10' : 'bg-black/10'
+                  }`} />
+                  <div className={`h-6 w-10 rounded mt-2 ${
+                    theme === 'dark' ? 'bg-white/10' : 'bg-black/10'
+                  }`} />
+                </div>
+              </div>
+
+              {/* Description */}
+              <div className={`h-3 w-full rounded ${
+                theme === 'dark' ? 'bg-white/10' : 'bg-black/10'
+              }`} />
+              <div className={`h-3 w-5/6 rounded mt-2 ${
+                theme === 'dark' ? 'bg-white/10' : 'bg-black/10'
+              }`} />
+
+              {/* Footer */}
+              <div className="mt-4">
+                <div className={`h-4 w-28 rounded ${
+                  theme === 'dark' ? 'bg-white/10' : 'bg-black/10'
+                }`} />
+              </div>
+            </div>
+          ))}
         </div>
       ) : filteredEcosystems.length === 0 ? (
         <div className={`text-center py-12 ${theme === 'dark' ? 'text-[#d4d4d4]' : 'text-[#7a6b5a]'}`}>

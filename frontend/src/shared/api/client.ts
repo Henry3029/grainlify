@@ -471,6 +471,72 @@ export const getEcosystems = () =>
     }>;
   }>('/ecosystems');
 
+// Open Source Week
+export const getOpenSourceWeekEvents = () =>
+  apiRequest<{
+    events: Array<{
+      id: string;
+      title: string;
+      description: string | null;
+      location: string | null;
+      status: string;
+      start_at: string;
+      end_at: string;
+      created_at: string;
+      updated_at: string;
+    }>;
+  }>('/open-source-week/events');
+
+export const getOpenSourceWeekEvent = (id: string) =>
+  apiRequest<{
+    event: {
+      id: string;
+      title: string;
+      description: string | null;
+      location: string | null;
+      status: string;
+      start_at: string;
+      end_at: string;
+      created_at: string;
+      updated_at: string;
+    };
+  }>(`/open-source-week/events/${id}`);
+
+export const getAdminOpenSourceWeekEvents = () =>
+  apiRequest<{
+    events: Array<{
+      id: string;
+      title: string;
+      description: string | null;
+      location: string | null;
+      status: string;
+      start_at: string;
+      end_at: string;
+      created_at: string;
+      updated_at: string;
+    }>;
+  }>('/admin/open-source-week/events', { requiresAuth: true, method: 'GET' });
+
+export const createOpenSourceWeekEvent = (data: {
+  title: string;
+  description?: string;
+  location?: string;
+  status: 'upcoming' | 'running' | 'completed' | 'draft';
+  start_at: string; // RFC3339
+  end_at: string; // RFC3339
+}) =>
+  apiRequest<{ id: string }>('/admin/open-source-week/events', {
+    requiresAuth: true,
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+
+export const deleteOpenSourceWeekEvent = (id: string) =>
+  apiRequest<{ ok: boolean }>(`/admin/open-source-week/events/${id}`, {
+    requiresAuth: true,
+    method: 'DELETE',
+  });
+
 export const createEcosystem = (data: {
   name: string;
   description?: string;

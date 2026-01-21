@@ -13,6 +13,8 @@ import { useTheme } from '../../shared/contexts/ThemeContext';
 import { LanguageIcon } from '../../shared/components/LanguageIcon';
 import { UserProfileDropdown } from '../../shared/components/UserProfileDropdown';
 import { RoleSwitcher } from '../../shared/components/RoleSwitcher';
+import { Modal, ModalFooter, ModalButton, ModalInput } from '../../shared/components/ui/Modal';
+import { bootstrapAdmin } from '../../shared/api/client';
 import { ContributorsPage } from './pages/ContributorsPage';
 import { BrowsePage } from './pages/BrowsePage';
 import { DiscoverPage } from './pages/DiscoverPage';
@@ -32,7 +34,7 @@ import { AdminPage } from '../admin/pages/AdminPage';
 import { SearchPage } from './pages/SearchPage';
 
 export function Dashboard() {
-  const { userRole, logout } = useAuth();
+  const { userRole, logout, login } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState('discover');
@@ -40,13 +42,22 @@ export function Dashboard() {
   const [selectedIssue, setSelectedIssue] = useState<{ issueId: string; projectId?: string } | null>(null);
   const [selectedEcosystemId, setSelectedEcosystemId] = useState<string | null>(null);
   const [selectedEcosystemName, setSelectedEcosystemName] = useState<string | null>(null);
-  const [selectedEventId, setSelectedEventId] = useState<number | null>(null);
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [selectedEventName, setSelectedEventName] = useState<string | null>(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [activeRole, setActiveRole] = useState<'contributor' | 'maintainer' | 'admin'>('contributor');
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const [viewingUserId, setViewingUserId] = useState<string | null>(null);
   const [viewingUserLogin, setViewingUserLogin] = useState<string | null>(null);
+
+  // Admin password gating (bootstrap token)
+  const [showAdminPasswordModal, setShowAdminPasswordModal] = useState(false);
+  const [adminPassword, setAdminPassword] = useState('');
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const [adminAuthenticated, setAdminAuthenticated] = useState(() => {
+    return sessionStorage.getItem('admin_authenticated') === 'true';
+  });
+  const [pendingAdminTarget, setPendingAdminTarget] = useState<'nav' | 'role' | null>(null);
 
   // Check URL params for viewing other users' profiles
   useEffect(() => {
@@ -93,10 +104,60 @@ export function Dashboard() {
 
   const handleLogout = () => {
     logout();
+    setAdminAuthenticated(false);
+    sessionStorage.removeItem('admin_authenticated');
     navigate('/');
   };
 
+  const openAdminAuthModal = (target: 'nav' | 'role') => {
+    setPendingAdminTarget(target);
+    setShowAdminPasswordModal(true);
+  };
+
+  const handleAdminClick = () => {
+    if (adminAuthenticated) {
+      setActiveRole('admin');
+      handleNavigation('admin');
+      return;
+    }
+    openAdminAuthModal('nav');
+  };
+
+  const handleAdminPasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!adminPassword.trim()) return;
+    setIsAuthenticating(true);
+    try {
+      const response = await bootstrapAdmin(adminPassword.trim());
+      await login(response.token);
+      setAdminAuthenticated(true);
+      sessionStorage.setItem('admin_authenticated', 'true');
+      setShowAdminPasswordModal(false);
+      setAdminPassword('');
+      setActiveRole('admin');
+      handleNavigation('admin');
+    } catch (error) {
+      console.error('Admin authentication failed:', error);
+      // Keep UI clean: show a simple message; avoid browser alert spam.
+      // The ModalInput will remain so user can retry.
+      setAdminPassword('');
+    } finally {
+      setIsAuthenticating(false);
+      setPendingAdminTarget(null);
+    }
+  };
+
   const handleRoleChange = (role: 'contributor' | 'maintainer' | 'admin') => {
+    if (role === 'admin') {
+      if (adminAuthenticated) {
+        setActiveRole('admin');
+        handleNavigation('admin');
+      } else {
+        // Non-admin users can click admin, but must authenticate first.
+        openAdminAuthModal('role');
+      }
+      return;
+    }
     setActiveRole(role);
     // Auto-navigate based on role and clear selections
     setSelectedProjectId(null);
@@ -105,9 +166,7 @@ export function Dashboard() {
     setSelectedEcosystemName(null);
     setSelectedEventId(null);
     setSelectedEventName(null);
-    if (role === 'admin') {
-      setCurrentPage('admin');
-    } else if (role === 'maintainer') {
+    if (role === 'maintainer') {
       setCurrentPage('maintainers');
     } else {
       setCurrentPage('discover');
@@ -236,34 +295,32 @@ export function Dashboard() {
               })}
             </nav>
 
-            {/* Admin Section - Only show for admin role */}
-            {activeRole === 'admin' && (
-              <div className={`${isSidebarCollapsed ? 'px-[8px]' : 'px-4'} mb-4`}>
-                <div className="h-[0.5px] opacity-[0.24] mb-4 mx-auto bg-white/20" />
-                <button
-                  onClick={() => handleNavigation('admin')}
-                  className={`group w-full flex items-center rounded-[12px] transition-all duration-300 ${
-                    isSidebarCollapsed ? 'justify-center px-0 h-[49px]' : 'justify-start px-3 py-2.5'
-                  } ${
-                    currentPage === 'admin'
-                      ? 'bg-gradient-to-r from-purple-500 to-purple-600 shadow-[inset_0px_0px_4px_0px_rgba(255,255,255,0.25)] border-[0.5px] border-[rgba(245,239,235,0.16)]'
-                      : 'hover:bg-purple-500/10'
-                  }`}
-                  title={isSidebarCollapsed ? 'Admin Panel' : ''}
-                >
-                  <Shield className={`w-6 h-6 transition-colors ${isSidebarCollapsed ? '' : 'flex-shrink-0'} ${
+            {/* Admin Section - available to all users (requires password) */}
+            <div className={`${isSidebarCollapsed ? 'px-[8px]' : 'px-4'} mb-4`}>
+              <div className="h-[0.5px] opacity-[0.24] mb-4 mx-auto bg-white/20" />
+              <button
+                onClick={handleAdminClick}
+                className={`group w-full flex items-center rounded-[12px] transition-all duration-300 ${
+                  isSidebarCollapsed ? 'justify-center px-0 h-[49px]' : 'justify-start px-3 py-2.5'
+                } ${
+                  currentPage === 'admin'
+                    ? 'bg-gradient-to-r from-purple-500 to-purple-600 shadow-[inset_0px_0px_4px_0px_rgba(255,255,255,0.25)] border-[0.5px] border-[rgba(245,239,235,0.16)]'
+                    : 'hover:bg-purple-500/10'
+                }`}
+                title={isSidebarCollapsed ? 'Admin Panel' : ''}
+              >
+                <Shield className={`w-6 h-6 transition-colors ${isSidebarCollapsed ? '' : 'flex-shrink-0'} ${
+                  currentPage === 'admin' ? 'text-white' : 'text-purple-400'
+                }`} />
+                {!isSidebarCollapsed && (
+                  <span className={`ml-3 font-medium text-[14px] ${
                     currentPage === 'admin' ? 'text-white' : 'text-purple-400'
-                  }`} />
-                  {!isSidebarCollapsed && (
-                    <span className={`ml-3 font-medium text-[14px] ${
-                      currentPage === 'admin' ? 'text-white' : 'text-purple-400'
-                    }`}>
-                      Admin Panel
-                    </span>
-                  )}
-                </button>
-              </div>
-            )}
+                  }`}>
+                    Admin Panel
+                  </span>
+                )}
+              </button>
+            </div>
 
           </div>
         </div>
@@ -399,7 +456,7 @@ export function Dashboard() {
                 )}
                 {currentPage === 'osw' && selectedEventId && selectedEventName && (
                   <OpenSourceWeekDetailPage 
-                    eventId={selectedEventId.toString()}
+                    eventId={selectedEventId}
                     eventName={selectedEventName}
                     onBack={() => {
                       setSelectedEventId(null);
@@ -437,11 +494,30 @@ export function Dashboard() {
                     }}
                   />
                 )}
-                {currentPage === 'data' && activeRole === 'admin' && <DataPage />}
+                {currentPage === 'data' && adminAuthenticated && <DataPage />}
                 {currentPage === 'leaderboard' && <LeaderboardPage />}
                 {currentPage === 'blog' && <BlogPage />}
                 {currentPage === 'settings' && <SettingsPage />}
-                {currentPage === 'admin' && <AdminPage />}
+                {currentPage === 'admin' && adminAuthenticated && <AdminPage />}
+                {currentPage === 'admin' && !adminAuthenticated && (
+                  <div className="flex items-center justify-center min-h-[60vh]">
+                    <div className={`text-center p-8 rounded-[24px] backdrop-blur-[40px] border ${
+                      darkTheme
+                        ? 'bg-white/[0.08] border-white/10 text-[#d4d4d4]'
+                        : 'bg-white/[0.15] border-white/25 text-[#7a6b5a]'
+                    }`}>
+                      <Shield className="w-16 h-16 mx-auto mb-4 text-[#c9983a]" />
+                      <h2 className={`text-2xl font-bold mb-2 ${darkTheme ? 'text-[#f5f5f5]' : 'text-[#2d2820]'}`}>Admin Access Required</h2>
+                      <p className="mb-4">Enter the admin password to continue.</p>
+                      <button
+                        onClick={() => openAdminAuthModal('nav')}
+                        className="px-6 py-3 bg-gradient-to-br from-[#c9983a] to-[#a67c2e] text-white rounded-[16px] font-semibold text-[14px] shadow-[0_6px_20px_rgba(162,121,44,0.35)] hover:shadow-[0_10px_30px_rgba(162,121,44,0.5)] transition-all"
+                      >
+                        Authenticate
+                      </button>
+                    </div>
+                  </div>
+                )}
                 {currentPage === 'search' && (
                   <SearchPage 
                     onBack={() => setCurrentPage('discover')}
@@ -464,6 +540,58 @@ export function Dashboard() {
           </div>
         </div>
       </main>
+
+      {/* Admin Password Modal */}
+      <Modal
+        isOpen={showAdminPasswordModal}
+        onClose={() => {
+          setShowAdminPasswordModal(false);
+          setAdminPassword('');
+          setPendingAdminTarget(null);
+        }}
+        title="Admin Authentication"
+        icon={<Shield className="w-6 h-6 text-[#c9983a]" />}
+        width="md"
+      >
+        <form onSubmit={handleAdminPasswordSubmit}>
+          <div className="space-y-4">
+            <p className={`text-sm ${darkTheme ? 'text-[#d4d4d4]' : 'text-[#7a6b5a]'}`}>
+              Enter the admin password to access the admin panel.
+            </p>
+            <ModalInput
+              type="password"
+              placeholder="Enter admin password"
+              value={adminPassword}
+              onChange={(value) => setAdminPassword(value)}
+              required
+              autoFocus
+            />
+            <p className={`text-xs ${darkTheme ? 'text-[#b8a898]' : 'text-[#7a6b5a]'}`}>
+              Tip: This must match the backend `ADMIN_BOOTSTRAP_TOKEN`.
+            </p>
+          </div>
+          <ModalFooter>
+            <ModalButton
+              variant="secondary"
+              onClick={() => {
+                setShowAdminPasswordModal(false);
+                setAdminPassword('');
+                setPendingAdminTarget(null);
+              }}
+              disabled={isAuthenticating}
+            >
+              Cancel
+            </ModalButton>
+            <ModalButton
+              variant="primary"
+              type="submit"
+              disabled={isAuthenticating || !adminPassword.trim()}
+            >
+              {isAuthenticating ? 'Authenticating...' : 'Authenticate'}
+            </ModalButton>
+          </ModalFooter>
+        </form>
+      </Modal>
     </div>
   );
 }

@@ -1,69 +1,70 @@
+import { useEffect, useMemo, useState } from 'react';
 import { useTheme } from '../../../shared/contexts/ThemeContext';
-import { Calendar, CircleDot, Clock } from 'lucide-react';
+import { Calendar } from 'lucide-react';
+import { getOpenSourceWeekEvents } from '../../../shared/api/client';
 
 interface OpenSourceWeekPageProps {
-  onEventClick: (id: number, name: string) => void;
+  onEventClick: (id: string, name: string) => void;
 }
 
 export function OpenSourceWeekPage({ onEventClick }: OpenSourceWeekPageProps) {
   const { theme } = useTheme();
-  const events = [
-    {
-      id: 1,
-      title: 'Open-Source Week Demo',
-      contributors: 320,
-      applicants: 'NaN/140',
-      projects: 0,
-      duration: '7 days',
-      startDate: '20 Dec 2025',
-      startTime: '10:30AM UTC',
-      endDate: '3 Jan 2026',
-      endTime: '10:30AM UTC',
-      location: 'Worldwide',
-      status: 'Upcoming soon',
-    },
-    {
-      id: 2,
-      title: 'Open-Source Week Summer Edition',
-      contributors: 320,
-      applicants: 'NaN/140',
-      projects: 0,
-      duration: '10 days',
-      startDate: '30 Dec 2025',
-      startTime: '10:30AM UTC',
-      endDate: '8 Jan 2026',
-      endTime: '10:30AM UTC',
-      location: 'Worldwide',
-      status: 'Running soon',
-    },
-  ];
 
-  const pastEvents = [
-    {
-      id: 3,
-      title: 'Open-Source Week',
-      subtitle: 'Spring Edition',
-      contributors: 320,
-      applicants: 'NaN/140',
-      projects: 0,
-      startDate: '28 Oct 2025',
-      startTime: '10:30AM UTC',
-      endDate: '4 Nov 2025',
-      endTime: '10:30AM UTC',
-    },
-    {
-      id: 4,
-      title: 'Open-Source Week',
-      subtitle: 'Winter Edition',
-      contributors: 320,
-      applicants: 'NaN/140',
-      projects: 0,
-      startDate: '23 Aug 2025',
-      startTime: '10:30AM UTC',
-      endDate: '5 Sep 2025',
-      endTime: '10:30AM UTC',
-    },
-  ];
+  const [isLoading, setIsLoading] = useState(true);
+  const [events, setEvents] = useState<
+    Array<{
+      id: string;
+      title: string;
+      description: string | null;
+      location: string | null;
+      status: string;
+      start_at: string;
+      end_at: string;
+    }>
+  >([]);
+
+  useEffect(() => {
+    let mounted = true;
+    const fetchEvents = async () => {
+      try {
+        setIsLoading(true);
+        const res = await getOpenSourceWeekEvents();
+        if (!mounted) return;
+        setEvents(res.events || []);
+      } catch (e) {
+        if (!mounted) return;
+        setEvents([]);
+      } finally {
+        if (!mounted) return;
+        setIsLoading(false);
+      }
+    };
+    fetchEvents();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const formattedEvents = useMemo(() => {
+    const fmtDate = (iso: string) =>
+      new Date(iso).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' });
+    const fmtTime = (iso: string) =>
+      new Date(iso).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+    const fmtStatus = (s: string) => {
+      if (s === 'upcoming') return 'Upcoming';
+      if (s === 'running') return 'Running';
+      if (s === 'completed') return 'Completed';
+      return 'Draft';
+    };
+    return events.map((e) => ({
+      ...e,
+      startDate: fmtDate(e.start_at),
+      endDate: fmtDate(e.end_at),
+      startTime: fmtTime(e.start_at),
+      endTime: fmtTime(e.end_at),
+      statusLabel: fmtStatus(e.status),
+    }));
+  }, [events]);
 
   return (
     <div className="space-y-6">
@@ -86,7 +87,47 @@ export function OpenSourceWeekPage({ onEventClick }: OpenSourceWeekPageProps) {
 
       {/* Main Events */}
       <div className="space-y-5">
-        {events.map((event) => (
+        {isLoading ? (
+          <div className={`backdrop-blur-[40px] rounded-[24px] border p-8 shadow-[0_8px_32px_rgba(0,0,0,0.08)] ${
+            theme === 'dark' ? 'bg-white/[0.08] border-white/10' : 'bg-white/[0.15] border-white/25'
+          }`}>
+            <div className="animate-pulse space-y-6">
+              <div className="flex items-start justify-between">
+                <div className="flex items-start space-x-4">
+                  <div className={`w-14 h-14 rounded-[16px] ${theme === 'dark' ? 'bg-white/10' : 'bg-black/10'}`} />
+                  <div className="space-y-3">
+                    <div className={`h-6 w-64 rounded ${theme === 'dark' ? 'bg-white/10' : 'bg-black/10'}`} />
+                    <div className={`h-8 w-28 rounded ${theme === 'dark' ? 'bg-white/10' : 'bg-black/10'}`} />
+                  </div>
+                </div>
+                <div className={`h-10 w-48 rounded-[14px] ${theme === 'dark' ? 'bg-white/10' : 'bg-black/10'}`} />
+              </div>
+              <div className="grid grid-cols-4 gap-8">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="space-y-2">
+                    <div className={`h-3 w-20 rounded ${theme === 'dark' ? 'bg-white/10' : 'bg-black/10'}`} />
+                    <div className={`h-7 w-24 rounded ${theme === 'dark' ? 'bg-white/10' : 'bg-black/10'}`} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : formattedEvents.length === 0 ? (
+          <div className={`backdrop-blur-[40px] rounded-[24px] border p-10 shadow-[0_8px_32px_rgba(0,0,0,0.08)] text-center ${
+            theme === 'dark' ? 'bg-white/[0.08] border-white/10' : 'bg-white/[0.15] border-white/25'
+          }`}>
+            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#c9983a] to-[#a67c2e] flex items-center justify-center shadow-[0_8px_24px_rgba(162,121,44,0.3)] border border-white/15 mx-auto mb-4">
+              <Calendar className="w-8 h-8 text-white" />
+            </div>
+            <h3 className={`text-[20px] font-bold mb-2 ${theme === 'dark' ? 'text-[#f5f5f5]' : 'text-[#2d2820]'}`}>
+              No Open-Source Week events yet
+            </h3>
+            <p className={`${theme === 'dark' ? 'text-[#d4d4d4]' : 'text-[#7a6b5a]'}`}>
+              Once an admin creates an event, it will show up here.
+            </p>
+          </div>
+        ) : (
+          formattedEvents.map((event) => (
           <div
             key={event.id}
             onClick={() => onEventClick(event.id, event.title)}
@@ -107,57 +148,16 @@ export function OpenSourceWeekPage({ onEventClick }: OpenSourceWeekPageProps) {
                   }`}>{event.title}</h3>
                   <span className={`px-3 py-1.5 rounded-[10px] text-[12px] font-semibold ${
                     theme === 'dark'
-                      ? 'bg-green-500/30 border border-green-500/50 text-green-300'
-                      : 'bg-green-500/20 border border-green-600/30 text-green-800'
+                      ? 'bg-[#c9983a]/20 border border-[#c9983a]/40 text-[#e8c77f]'
+                      : 'bg-[#c9983a]/15 border border-[#c9983a]/30 text-[#6d5530]'
                   }`}>
-                    {event.status}
+                    {event.statusLabel}
                   </span>
                 </div>
               </div>
               <button className="px-6 py-3 bg-gradient-to-br from-[#c9983a] to-[#a67c2e] text-white rounded-[14px] font-semibold text-[14px] shadow-[0_6px_20px_rgba(162,121,44,0.35)] hover:shadow-[0_8px_24px_rgba(162,121,44,0.4)] transition-all border border-white/10">
                 Join the Open-Source Week
               </button>
-            </div>
-
-            <div className="grid grid-cols-4 gap-8 mb-6">
-              <div>
-                <div className={`text-[12px] mb-2 transition-colors ${
-                  theme === 'dark' ? 'text-[#d4d4d4]' : 'text-[#7a6b5a]'
-                }`}>Contributors</div>
-                <div className={`text-[28px] font-bold transition-colors ${
-                  theme === 'dark' ? 'text-[#f5f5f5]' : 'text-[#2d2820]'
-                }`}>{event.contributors}</div>
-              </div>
-              <div>
-                <div className={`text-[12px] mb-2 transition-colors ${
-                  theme === 'dark' ? 'text-[#d4d4d4]' : 'text-[#7a6b5a]'
-                }`}>Applicants</div>
-                <div className={`text-[28px] font-bold transition-colors ${
-                  theme === 'dark' ? 'text-[#f5f5f5]' : 'text-[#2d2820]'
-                }`}>{event.applicants}</div>
-              </div>
-              <div>
-                <div className={`text-[12px] mb-2 transition-colors ${
-                  theme === 'dark' ? 'text-[#d4d4d4]' : 'text-[#7a6b5a]'
-                }`}>Projects</div>
-                <div className={`text-[28px] font-bold flex items-center space-x-2 transition-colors ${
-                  theme === 'dark' ? 'text-[#f5f5f5]' : 'text-[#2d2820]'
-                }`}>
-                  <CircleDot className="w-6 h-6 text-[#c9983a]" />
-                  <span>{event.projects}</span>
-                </div>
-              </div>
-              <div>
-                <div className={`text-[12px] mb-2 transition-colors ${
-                  theme === 'dark' ? 'text-[#d4d4d4]' : 'text-[#7a6b5a]'
-                }`}>Left</div>
-                <div className={`text-[28px] font-bold flex items-center space-x-2 transition-colors ${
-                  theme === 'dark' ? 'text-[#f5f5f5]' : 'text-[#2d2820]'
-                }`}>
-                  <Clock className="w-6 h-6 text-[#c9983a]" />
-                  <span>{event.duration}</span>
-                </div>
-              </div>
             </div>
 
             <div className="flex items-center justify-between pt-6 border-t border-white/10">
@@ -191,80 +191,12 @@ export function OpenSourceWeekPage({ onEventClick }: OpenSourceWeekPageProps) {
                 }`}>Location</div>
                 <div className={`text-[15px] font-semibold transition-colors ${
                   theme === 'dark' ? 'text-[#f5f5f5]' : 'text-[#2d2820]'
-                }`}>{event.location}</div>
+                }`}>{event.location || 'TBA'}</div>
               </div>
             </div>
           </div>
-        ))}
-      </div>
-
-      {/* Additional Events Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        {pastEvents.map((event) => (
-          <div
-            key={event.id}
-            onClick={() => onEventClick(event.id, `${event.title} ${event.subtitle || ''}`)}
-            className={`backdrop-blur-[40px] rounded-[20px] border p-6 shadow-[0_8px_32px_rgba(0,0,0,0.08)] transition-all cursor-pointer ${
-              theme === 'dark'
-                ? 'bg-white/[0.08] border-white/10 hover:bg-white/[0.12] hover:shadow-[0_8px_24px_rgba(201,152,58,0.15)]'
-                : 'bg-white/[0.15] border-white/25 hover:bg-white/[0.2] hover:shadow-[0_8px_24px_rgba(0,0,0,0.12)]'
-            }`}
-          >
-            <div className="flex items-start space-x-3 mb-5">
-              <div className="w-12 h-12 rounded-[12px] bg-gradient-to-br from-[#c9983a] to-[#a67c2e] flex items-center justify-center shadow-md border border-white/10">
-                <Calendar className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h4 className={`text-[18px] font-bold transition-colors ${
-                  theme === 'dark' ? 'text-[#f5f5f5]' : 'text-[#2d2820]'
-                }`}>{event.title}</h4>
-                <h5 className={`text-[14px] transition-colors ${
-                  theme === 'dark' ? 'text-[#d4d4d4]' : 'text-[#7a6b5a]'
-                }`}>{event.subtitle}</h5>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-4 mb-5">
-              <div>
-                <div className={`text-[16px] font-bold transition-colors ${
-                  theme === 'dark' ? 'text-[#f5f5f5]' : 'text-[#2d2820]'
-                }`}>{event.contributors}</div>
-                <div className={`text-[11px] transition-colors ${
-                  theme === 'dark' ? 'text-[#d4d4d4]' : 'text-[#7a6b5a]'
-                }`}>Contributors</div>
-              </div>
-              <div>
-                <div className={`text-[16px] font-bold transition-colors ${
-                  theme === 'dark' ? 'text-[#f5f5f5]' : 'text-[#2d2820]'
-                }`}>{event.applicants}</div>
-                <div className={`text-[11px] transition-colors ${
-                  theme === 'dark' ? 'text-[#d4d4d4]' : 'text-[#7a6b5a]'
-                }`}>Applicants</div>
-              </div>
-              <div>
-                <div className={`text-[16px] font-bold transition-colors ${
-                  theme === 'dark' ? 'text-[#f5f5f5]' : 'text-[#2d2820]'
-                }`}>{event.projects}</div>
-                <div className={`text-[11px] transition-colors ${
-                  theme === 'dark' ? 'text-[#d4d4d4]' : 'text-[#7a6b5a]'
-                }`}>Projects</div>
-              </div>
-            </div>
-
-            <div className={`flex items-center justify-between text-[12px] pt-4 border-t border-white/10 transition-colors ${
-              theme === 'dark' ? 'text-[#d4d4d4]' : 'text-[#7a6b5a]'
-            }`}>
-              <div>
-                <div className="mb-0.5">{event.startDate}</div>
-                <div className={theme === 'dark' ? 'text-[#b8a898]' : 'text-[#8b7a6a]'}>{event.startTime}</div>
-              </div>
-              <div className="text-right">
-                <div className="mb-0.5">{event.endDate}</div>
-                <div className={theme === 'dark' ? 'text-[#b8a898]' : 'text-[#8b7a6a]'}>{event.endTime}</div>
-              </div>
-            </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
     </div>
   );

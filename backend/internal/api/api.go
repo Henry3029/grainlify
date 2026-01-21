@@ -171,6 +171,11 @@ func New(cfg config.Config, deps Deps) *fiber.App {
 	ecosystems := handlers.NewEcosystemsPublicHandler(deps.DB)
 	app.Get("/ecosystems", ecosystems.ListActive())
 
+	// Open Source Week (public)
+	osw := handlers.NewOpenSourceWeekHandler(deps.DB)
+	app.Get("/open-source-week/events", osw.ListPublic())
+	app.Get("/open-source-week/events/:id", osw.GetPublic())
+
 	// Public leaderboard
 	leaderboard := handlers.NewLeaderboardHandler(deps.DB)
 	app.Get("/leaderboard", leaderboard.Leaderboard())
@@ -219,6 +224,12 @@ func New(cfg config.Config, deps Deps) *fiber.App {
 	adminGroup.Post("/ecosystems", auth.RequireRole("admin"), ecosystemsAdmin.Create())
 	adminGroup.Put("/ecosystems/:id", auth.RequireRole("admin"), ecosystemsAdmin.Update())
 	adminGroup.Delete("/ecosystems/:id", auth.RequireRole("admin"), ecosystemsAdmin.Delete())
+
+	// Open Source Week (admin)
+	oswAdmin := handlers.NewOpenSourceWeekAdminHandler(deps.DB)
+	adminGroup.Get("/open-source-week/events", auth.RequireRole("admin"), oswAdmin.List())
+	adminGroup.Post("/open-source-week/events", auth.RequireRole("admin"), oswAdmin.Create())
+	adminGroup.Delete("/open-source-week/events/:id", auth.RequireRole("admin"), oswAdmin.Delete())
 
 	webhooks := handlers.NewGitHubWebhooksHandler(cfg, deps.DB, deps.Bus)
 	// Register webhook endpoint with explicit OPTIONS support for CORS
