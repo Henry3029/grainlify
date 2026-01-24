@@ -221,9 +221,18 @@ func (h *GitHubOAuthHandler) CallbackUnified() fiber.Handler {
 		// Decode state parameter to extract CSRF token and redirect_uri (OAuth 2.0 spec)
 		csrfToken, redirectURIFromState, err := decodeStateWithRedirect(encodedState)
 		if err != nil {
-			slog.Error("OAuth callback - failed to decode state", "error", err)
+			slog.Error("OAuth callback - failed to decode state", 
+				"error", err,
+				"encoded_state", encodedState,
+			)
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid_state_format"})
 		}
+
+		slog.Info("OAuth callback - decoded state",
+			"csrf_token", csrfToken,
+			"redirect_uri_from_state", redirectURIFromState,
+			"encoded_state_length", len(encodedState),
+		)
 
 		// Validate CSRF token against database (OAuth 2.0 security requirement)
 		var storedKind string
@@ -236,9 +245,18 @@ WHERE state = $1
   AND expires_at > now()
 `, csrfToken).Scan(&storedKind, &stateUserID, &storedRedirectURI)
 		if errors.Is(err, pgx.ErrNoRows) {
+			slog.Warn("OAuth callback - state not found or expired",
+				"csrf_token", csrfToken,
+				"encoded_state", encodedState,
+			)
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid_or_expired_state"})
 		}
 		if err != nil {
+			slog.Error("OAuth callback - database error during state lookup",
+				"error", err,
+				"csrf_token", csrfToken,
+				"encoded_state", encodedState,
+			)
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "state_lookup_failed"})
 		}
 
